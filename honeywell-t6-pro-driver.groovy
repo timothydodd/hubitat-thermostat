@@ -2,7 +2,7 @@
  * Honeywell T6 Pro Z-Wave Thermostat (Lite)
  *
  * Author: Tim Dodd
- * Version: 1.0.1
+ * Version: 1.0.2
  *
  * Based on "Advanced Honeywell T6 Pro" by Bryan Copeland (djdizzyd)
  * https://github.com/djdizzyd/hubitat
@@ -13,6 +13,7 @@
  *  - Thermostat installer settings are left to the thermostat itself
  *
  * Changelog
+ *  1.0.2 (2026-09-24) - Fix "Cannot read write-only property: schedule" in configure/updated
  *  1.0.1 (2026-09-24) - Home/Away, TH6320ZW2007 fingerprints, calibration wording for Celsius
  *  1.0.0 (2026-09-24) - Initial release
  */
@@ -219,7 +220,9 @@ void fanOn()        { setThermostatFanMode("on") }
 void fanAuto()      { setThermostatFanMode("auto") }
 void fanCirculate() { setThermostatFanMode("circulate") }
 
-void setSchedule(json) {
+// No parameter on purpose: a one-argument setSchedule() makes Groovy treat
+// "schedule" as a write-only property, which breaks the hub's schedule() call.
+void setSchedule() {
     log.warn "${device.displayName} setSchedule is not supported; use the thermostat's own schedule"
 }
 
