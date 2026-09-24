@@ -1,6 +1,6 @@
 # Honeywell T6 Pro Thermostat (Lite) for Hubitat Elevation
 
-A lightweight Z-Wave driver for the Honeywell T6 Pro (TH6320ZW) built for low hub load.
+A lightweight Z-Wave driver for the Honeywell T6 Pro (TH6320ZW, including the newer TH6320ZW2007 with SmartStart) built for low hub load.
 
 It was written to fix `LimitExceededException: Device generates excessive hub load` errors seen with the original driver.
 
@@ -9,7 +9,8 @@ It was written to fix `LimitExceededException: Device generates excessive hub lo
 - **Thermostat control**: modes (off / heat / cool / auto / emergency heat), heating and cooling setpoints, fan mode (auto / on / circulate)
 - **Sensors**: temperature, humidity, battery, power source (mains / battery)
 - **Operating state**: idle, heating, cooling, fan only, pending heat/cool
-- **Thermostat settings**: sensor calibration (±3°) and idle display brightness
+- **Home / Away**: switch the thermostat between its Home and Away settings
+- **Thermostat settings**: sensor calibration (±3°F or ±1.5°C) and idle display brightness
 - **Clock sync**: sets the thermostat's clock daily at 3:15am, so its built-in schedule follows DST
 - **°F / °C**: temperatures and setpoints are converted to the hub's temperature scale
 
@@ -49,11 +50,12 @@ It was written to fix `LimitExceededException: Device generates excessive hub lo
 | Command | What it does |
 |---------|--------------|
 | **Configure** | Adds the hub to the thermostat's lifeline so it reports changes on its own, publishes supported modes, schedules the daily clock sync, then refreshes. Safe to run any time. |
-| **Refresh** | Reads mode, operating state, setpoints, fan mode, temperature, humidity, battery, brightness and calibration |
+| **Refresh** | Reads mode, operating state, setpoints, fan mode, temperature, humidity, battery, Home/Away, brightness and calibration |
 | **setHeatingSetpoint / setCoolingSetpoint** | Whole degrees in °F, half degrees in °C |
 | **setThermostatMode** / off / heat / cool / auto / emergencyHeat | Sets the thermostat mode |
 | **setThermostatFanMode** / fanOn / fanAuto / fanCirculate | Sets the fan mode |
-| **setSensorCalibration** | Offsets the thermostat's temperature sensor by -3 to +3 degrees |
+| **home / away** | Switches the thermostat to its Home or Away setting |
+| **setSensorCalibration** | Offsets the thermostat's temperature sensor by -3 to +3 steps (1°F per step, or 0.5°C when the thermostat is set to Celsius) |
 | **setIdleBrightness** | Idle display brightness, 0-5 |
 | **syncClock** | Sets the thermostat's clock to the hub's time now |
 
@@ -63,7 +65,8 @@ Standard thermostat attributes (`thermostatMode`, `thermostatOperatingState`, `t
 
 | Attribute | Description |
 |-----------|-------------|
-| `sensorCalibration` | Current sensor offset |
+| `occupancy` | `home` or `away`, as reported by the thermostat |
+| `sensorCalibration` | Current sensor offset, in steps |
 | `idleBrightness` | Current idle display brightness |
 
 In **auto** mode, `thermostatSetpoint` follows whichever setpoint the equipment is working toward (or last worked toward when idle).

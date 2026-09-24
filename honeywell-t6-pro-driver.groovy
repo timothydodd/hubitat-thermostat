@@ -2,7 +2,7 @@
  * Honeywell T6 Pro Z-Wave Thermostat (Lite)
  *
  * Author: Tim Dodd
- * Version: 1.0.0
+ * Version: 1.0.1
  *
  * Based on "Advanced Honeywell T6 Pro" by Bryan Copeland (djdizzyd)
  * https://github.com/djdizzyd/hubitat
@@ -13,6 +13,7 @@
  *  - Thermostat installer settings are left to the thermostat itself
  *
  * Changelog
+ *  1.0.1 (2026-09-24) - Home/Away, TH6320ZW2007 fingerprints, calibration wording for Celsius
  *  1.0.0 (2026-09-24) - Initial release
  */
 
@@ -40,12 +41,18 @@ metadata {
 
         attribute "sensorCalibration", "number"
         attribute "idleBrightness", "number"
+        attribute "occupancy", "enum", ["home", "away"]
 
-        command "setSensorCalibration", [[name: "offset*", type: "ENUM", description: "Degrees to add to / subtract from the thermostat's sensor", constraints: ["-3", "-2", "-1", "0", "1", "2", "3"]]]
+        command "setSensorCalibration", [[name: "offset*", type: "ENUM", description: "Sensor offset in steps: 1°F each, or 0.5°C each when the thermostat is set to Celsius", constraints: ["-3", "-2", "-1", "0", "1", "2", "3"]]]
         command "setIdleBrightness", [[name: "level*", type: "ENUM", description: "Display brightness when idle", constraints: ["0", "1", "2", "3", "4", "5"]]]
         command "syncClock"
+        command "home"
+        command "away"
 
         fingerprint mfr: "0039", prod: "0011", deviceId: "0008", inClusters: "0x5E,0x85,0x86,0x59,0x31,0x80,0x81,0x70,0x5A,0x72,0x71,0x73,0x9F,0x44,0x45,0x40,0x42,0x43,0x6C,0x55", deviceJoinName: "Honeywell T6 Pro"
+        // TH6320ZW2007 (T6 Pro with SmartStart)
+        fingerprint mfr: "041B", prod: "0011", deviceId: "0009", deviceJoinName: "Honeywell T6 Pro"
+        fingerprint mfr: "041B", prod: "0011", deviceId: "000A", deviceJoinName: "Honeywell T6 Pro"
     }
 
     preferences {
@@ -142,6 +149,7 @@ void refresh() {
         zwave.sensorMultilevelV5.sensorMultilevelGet(sensorType: 1, scale: hubIsFahrenheit() ? 1 : 0),
         zwave.sensorMultilevelV5.sensorMultilevelGet(sensorType: 5, scale: 0),
         zwave.batteryV1.batteryGet(),
+        zwave.basicV1.basicGet(),
         zwave.configurationV1.configurationGet(parameterNumber: PARAM_IDLE_BRIGHTNESS),
         zwave.configurationV1.configurationGet(parameterNumber: PARAM_SENSOR_CAL)
     ])
@@ -213,6 +221,17 @@ void fanCirculate() { setThermostatFanMode("circulate") }
 
 void setSchedule(json) {
     log.warn "${device.displayName} setSchedule is not supported; use the thermostat's own schedule"
+}
+
+// Basic Set to the thermostat switches it between Home (0xFF) and Away (0x00)
+void home() {
+    logDebug "home()"
+    send([zwave.basicV1.basicSet(value: 0xFF), zwave.basicV1.basicGet()], 1000)
+}
+
+void away() {
+    logDebug "away()"
+    send([zwave.basicV1.basicSet(value: 0x00), zwave.basicV1.basicGet()], 1000)
 }
 
 void pollOperatingState() {
@@ -347,6 +366,11 @@ void zwaveEvent(hubitat.zwave.commands.basicv1.BasicSet cmd) {
     // when it disagrees with ours, and debounce so a burst costs one request.
     boolean running = device.currentValue("thermostatOperatingState") in ["heating", "cooling"]
     if ((cmd.value == 0xFF) != running) runIn(3, "pollOperatingState")
+}
+
+// Answer to our Basic Get: 0 is Away, anything else is Home
+void zwaveEvent(hubitat.zwave.commands.basicv1.BasicReport cmd) {
+    emit("occupancy", cmd.value == 0 ? "away" : "home")
 }
 
 void zwaveEvent(hubitat.zwave.commands.associationv2.AssociationReport cmd) {

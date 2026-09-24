@@ -1,7 +1,7 @@
 {
   "packageName": "Honeywell T6 Pro Thermostat (Lite)",
   "author": "Tim Dodd",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "minimumHEVersion": "2.2.4",
   "dateReleased": "2026-09-24",
   "drivers": [
@@ -11,7 +11,7 @@
       "namespace": "dodd",
       "location": "https://raw.githubusercontent.com/timothydodd/hubitat-thermostat/master/honeywell-t6-pro-driver.groovy",
       "required": true,
-      "version": "1.0.0"
+      "version": "1.0.1"
     }
   ]
 }
