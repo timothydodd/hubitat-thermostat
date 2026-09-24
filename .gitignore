@@ -1,0 +1,3 @@
+# Original driver kept locally for reference only
+*.original.groovy
+.claude/
